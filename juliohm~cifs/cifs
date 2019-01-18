@@ -66,11 +66,7 @@ domount() {
   ## are a painful to deal with in a shell script.
   ## This works around that by saving credentials in a
   ## temporary file.
-  FINALOPTS="credentials=/tmp/temporary.$PODID.tmp"
-
-  if [[ "$OPTS" != "" && $OPTS != "null" ]]; then
-    FINALOPTS="$FINALOPTS,$OPTS,$READWRITE"
-  fi
+  CREDENTIALS="credentials=/tmp/temporary.$PODID.tmp"
 
   if [ $(ismounted) -eq 1 ] ; then
     log '{"status": "Success"}'
@@ -80,16 +76,26 @@ domount() {
   mkdir -p ${MNTPATH} &> /dev/null
 
   rm -fr /tmp/temporary.$PODID.tmp
-  if [[ "$USERNAME" != "" ]]; then
-    echo "username=$USERNAME" >> /tmp/temporary.$PODID.tmp
+  if [[ "$USERNAME" != "" ]]; 
+    then
+	  echo "username=$USERNAME" >> /tmp/temporary.$PODID.tmp
+      if [[ "$DOMAIN" != "" ]]; then
+		echo "domain=$DOMAIN" >> /tmp/temporary.$PODID.tmp
+      fi
+      if [[ "$PASSWORD" != "" ]]; then
+		echo "password=$PASSWORD" >> /tmp/temporary.$PODID.tmp
+      fi
+	  FINALOPTS="$CREDENTIALS"
+	else
+	  FINALOPTS="guest"
   fi
-  if [[ "$DOMAIN" != "" ]]; then
-          echo "domain=$DOMAIN" >> /tmp/temporary.$PODID.tmp
+  
+  if [[ "$OPTS" != "" && $OPTS != "null" ]]; then
+	FINALOPTS="$FINALOPTS,$OPTS"
   fi
-  if [[ "$PASSWORD" != "" ]]; then
-          echo "password=$PASSWORD" >> /tmp/temporary.$PODID.tmp
-  fi
-
+  
+  FINALOPTS="$FINALOPTS,$READWRITE"
+  
   mount -t cifs -o $FINALOPTS "//$CIFS_SERVER$CIFS_SHARE" "$MNTPATH" &> /dev/null
   R=$?
   rm -fr /tmp/temporary.$PODID.tmp
